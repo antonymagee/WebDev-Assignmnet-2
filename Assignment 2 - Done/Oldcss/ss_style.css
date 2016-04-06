@@ -1,0 +1,129 @@
+  /**************************************************************************
+
+    ** Function: loadPlayXML                      
+
+	** Uses ajax to load the XML file of the play from the plays folder. If
+
+	** succesful it will call the displayPlayContentsPage() function
+
+	**************************************************************************/
+
+    function loadPlayXML(playNameAsXML){
+
+        $.ajax({
+
+			type:"GET",
+
+			url: "plays/" + playNameAsXML,
+
+			dataType: "xml",
+
+			success: displayPlayContentsPage
+
+        });
+
+    };
+	
+	
+	/**********************************************************************
+
+		** Event: 'Select a Play' dropdown click event
+
+		** Selecting a play name in the Play dropdown box will load the play
+
+		**********************************************************************/
+
+		$('#select_play').change(function(event){
+
+			var playNameAsXML = $(this).val();	
+
+			openPlay(playNameAsXML);					
+
+		});	
+		
+		
+		
+		     function parseXml(play)
+
+      {
+        var searchString = "love";
+        var tempSpeech;
+        var tempLine;
+
+//    Displays the title of the play 
+
+        $("#output").append("<p class='titleBold'>Dramatis Personae</p>");
+		$("#output").append("<hr />");
+		
+		$(play).find("PLAY>ACT").each(function()
+        {
+          $("#output").append("<li class='green'>" + $(this).children('TITLE:first').text() + "</li>");
+		  $("#output").append("<ul>");
+		  
+		$(this).find('SCENE').each(function(){          	          
+			
+			$("#output").append("<li>" + $(this).find('TITLE').text() + "</li>");
+			
+			
+		  
+        });
+		$("#output").append("<br />");
+	});
+        $("#output").append("<hr />");
+		
+		
+		
+		
+	
+		
+		
+		
+
+//    Displays every line in the play, preceeded by the text 'Line: n' coloured using a class 
+		$("#output").append("<table>");
+        $("#output").append("<p class='titleBold'>All the lines in the play</p>");
+
+        $(play).find("LINE").each(function(i){
+          $("#output").append("<span class='green'>Line " + (i+1) + ": </span>");
+          $("#output").append($(this).text() + "<br>");
+        });
+
+
+        $("#output").append("<hr />");
+
+
+//    Displays, for every speeh, the name of the speaker and the first line of the speech
+
+        $("#output").append("<p class='titleBold'>All speeches' speaker and first line</p>");
+
+        $(play).find("SPEECH").each(function()
+        {
+          tempSpeech = this;  // use of tempSpeech is to improve readability
+                              // because where 'this' occurs on different levels
+                              // it can be hard for us humans to keep track of
+                              // what 'this' refers to. 
+
+
+          $(tempSpeech).find("SPEAKER").each(function(){
+            $("#output").append($(this).text() + "<br>");
+          });
+          $(this).find("LINE:first").each(function(){
+            $("#output").append($(this).text() + "<br>");
+          });
+        });
+
+        $("#output").append("<hr />");
+
+
+//     Performs a simple but powerful string pattern match on each line
+//     and outputs all lines which contains at least one match
+
+        $("#output").append("<p class='titleBold'>Search for Love - (well, it's Shakespeare!)</p>");
+
+        $(play).find("LINE:contains(" + searchString +")").each(function(){
+          $("#output").append($(this).text() + "<br>");
+        });
+
+        $("#output").append("<hr />");
+
+       }

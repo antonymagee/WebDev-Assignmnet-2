@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link type="text/css" href="css/antony/jquery-ui-1.8.16.custom.css" rel="stylesheet" />
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
+  
+  <script>
+  $(document).ready(function() {
+   
+   $("#accordion").accordion();
+	
+	$('#home_button').button();		
+
+	$('#contents_button').button({ disabled: true });
+
+	$('#display_info_button').button({ disabled: true });
+	
+	// Click handler to act when a play in the accorrdion is clicked
+		
+		$('.playSelect').click(function(event) {
+
+  	    	var playNameAsXML = $(this).attr('id');	
+
+        	openPlay(playNameAsXML);							
+
+        });
+		
+		// Select a play from Select Element
+		
+		$('#select_play').change(function(event){
+
+			var playNameAsXML = $(this).val();	
+
+			openPlay(playNameAsXML);					
+
+		});	
+		
+		function openPlay(playNameAsXML){
+
+        	// Clear the #output DIV and hide the accordion menu
+
+			$("#output").empty();
+
+			$('#accordion').hide();
+			
+			$('#select_play').val(playNameAsXML);
+			
+			loadPlayXML(playNameAsXML);
+		
+  };
+  
+
+	
+  });
+  
+  
+  
+  
+  
+  </script>
+</head>
+<body style="font-size:62.5%;">
+  
+<div id="for_site">
+<div id="title">
+<br>
+<h1> A collection of shakespeares plays </h1>
+<br>
+</div>
+  
+<div id="menu">
+
+			<input type="button" id="home_button" class="button" value="Home"><br/> 
+
+			<input type="button" id="contents_button" class="button" value="Contents"><br/> 
+
+			<input type="button" id="display_info_button" class="button" value="Display play info"> <br/> 
+
+			
+			
+			
+<p>
+				<span class="sideBarText">Select a Play..</span> 				
+				<select id="select_play">		    
+
+				<!---- Group of Tragedies ----->
+				
+				<option selected="yes">...</option> 
+				<option value="heading" class="select_heading">Tragedies</option> 
+				<option value="a_and_c.xml">Antony and Cleopatra</option> 
+				<option value="coriolan.xml">Coriolanus</option> 
+				<option value="hamlet.xml">Hamlet</option> 
+				<option value="j_caesar.xml">Julius Caesar</option> 
+				<option value="lear.xml">King Lear</option> 
+				<option value="macbeth.xml">Macbeth</option> 
+				<option value="othello.xml">Othello</option> 
+				<option value="r_and_j.xml">Romeo and Juliet</option> 
+				<option value="timon.xml">Timon of Athens</option> 
+				<option value="titus.xml">Titus Andronicus</option> 
+
+				<!---- Group of History plays ----->
+
+				<option value="heading" class="select_heading"></option> 
+				<option value="heading" class="select_heading">Histories</option> 
+				<option value="hen_iv_1.xml">Henry IV, Part I</option> 
+				<option value="hen_iv_2.xml">Henry IV, Part II</option> 
+				<option value="hen_v.xml">Henry V</option> 
+				<option value="hen_vi_1.xml">Henry VI, Part I</option> 
+				<option value="hen_vi_2.xml">Henry IV, Part II</option> 
+				<option value="hen_vi_3.xml">Henry IV, Part III</option> 
+				<option value="hen_viii.xml">Henry VIII</option> 
+				<option value="john.xml">King John</option> 
+				<option value="rich_ii.xml">Richard II</option> 
+				<option value="rich_iii.xml">Richard II</option> 
+
+				<!---- Group of Comedy plays -----> 
+
+				<option value="heading" class="select_heading"></option> 
+				<option value="heading" class="select_heading">Comedies</option> 
+				<option value="all_well.xml">All's Well That Ends Well</option> 
+				<option value="as_you.xml">As You Like It</option> 
+				<option value="com_err.xml">The Comedy of Errors</option> 
+				<option value="cymbelin.xml">Cymbeline</option> 
+				<option value="lll.xml">Love's Labours Lost</option> 
+				<option value="m_for_m.xml">Measure for Measure</option> 
+				<option value="m_wives.xml">The Mercy Wives of Windsor</option> 
+				<option value="merchant.xml">The Merchant of Venice</option> 
+				<option value="dream.xml">A Midsummer Night's Dream</option> 
+				<option value="much_ado.xml">Much Ado About Nothing</option> 
+				<option value="pericles.xml">Pericles, Prince of Tyre</option> 
+				<option value="taming.xml">The Taming of the Shrew</option> 
+				<option value="tempest.xml">The Tempest</option> 
+				<option value="troilus.xml">Troilus and Cressida</option> 
+				<option value="t_night.xml">Twelfth Night</option> 
+				<option value="two_gent.xml">Two Gentlemen of Verona</option> 
+				<option value="win_tale.xml">The Winter's Tale</option> 
+				
+				</select> 
+				</p>
+</div>  
+
+<div id="content">  
+<div id="accordion">
+	<h3><a href="#">Tragedies</a></h3>
+	<div>
+		<ul> 
+			<li id="a_and_c.xml" class="playSelect"><a href="#">Antony and Cleopatra</a></li> 
+		    <li id="coriolan.xml" class="playSelect"><a href="#">Coriolanus</a></li> 
+			<li id="hamlet.xml" class="playSelect"><a href="#">Hamlet</a></li> 
+			<li id="j_caesar.xml" class="playSelect"><a href="#">Julius Caesar</a></li> 
+			<li id="lear.xml" class="playSelect"><a href="#">King Lear</a></li> 
+			<li id="macbeth.xml" class="playSelect"><a href="#">Macbeth</a></li> 
+			<li id="othello.xml" class="playSelect"><a href="#">Othello</a></li> 
+			<li id="r_and_j.xml" class="playSelect"><a href="#">Romeo and Juliet</a></li> 
+			<li id="timon.xml" class="playSelect"><a href="#">Timon of Athens</a></li> 
+			<li id="titus.xml" class="playSelect"><a href="#">Titus Andronicus</a></li>		                 		          
+		</ul> 
+	</div>
+	
+	
+	<h3><a href="#">Histories</a></h3>
+	<div>
+		<ul> 
+			<li id="hen_iv_1.xml" class="playSelect"><a href="#">Henry IV, Part I</a></li> 
+			<li id="hen_iv_2.xml" class="playSelect"><a href="#">Henry IV, Part II</a></li> 
+			<li id="hen_v.xml" class="playSelect"><a href="#">Henry V</a></li> 
+			<li id="hen_vi_1.xml" class="playSelect"><a href="#">Henry VI, Part I</a></li> 	
+			<li id="hen_vi_2.xml" class="playSelect"><a href="#">Henry VI, Part II</a></li> 
+			<li id="hen_vi_3.xml" class="playSelect"><a href="#">Henry VI, Part III</a></li> 
+			<li id="hen_viii.xml" class="playSelect"><a href="#">Henry VIII</a></li> 
+			<li id="john.xml" class="playSelect"><a href="#">King John</a></li> 
+			<li id="rich_ii.xml" class="playSelect"><a href="#">Richard II</a></li> 
+			<li id="rich_iii.xml" class="playSelect"><a href="#">Richard III</a></li>          		          
+		</ul>
+	</div>
+	
+	
+	<h3><a href="#">Comedies</a></h3>
+	<div>
+		<ul>		          
+			<li id="all_well.xml" class="playSelect"><a href="#">All's Well That Ends Well</a></li> 		      <li id="as_you.xml" class="playSelect"><a href="#">As You Like It</a></li> 
+			<li id="com_err.xml" class="playSelect"><a href="#">The Comedy of Errors</a></li> 
+			<li id="cymbelin.xml" class="playSelect"><a href="#">Cymbeline</a></li> 
+			<li id="lll.xml" class="playSelect"><a href="#">Love's Labours Lost</a></li> 
+			<li id="m_for_m.xml" class="playSelect"><a href="#">Measure for Measure</a></li> 
+			<li id="m_wives.xml" class="playSelect"><a href="#">The Merry Wives of Windsor</a></li> 
+			<li id="merchant.xml" class="playSelect"><a href="#">The Merchant of Venice</a></li>	
+			<li id="dream.xml" class="playSelect"><a href="#">A Midsummer Night's Dream</a></li> 
+			<li id="much_ado.xml" class="playSelect"><a href="#">Much Ado About Nothing</a></li> 
+			<li id="pericles.xml" class="playSelect"><a href="#">Pericles, Prince of Tyre</a></li> 
+			<li id="taming.xml" class="playSelect"><a href="#">The Taming of the Shrew</a></li> 
+		    <li id="tempest.xml" class="playSelect"><a href="#">The Tempest</a></li> 
+			<li id="troilus.xml" class="playSelect"><a href="#">Troilus and Cressida</a></li> 
+			<li id="t_night.xml" class="playSelect"><a href="#">Twelfth Night</a></li> 
+			<li id="two_gent.xml" class="playSelect"><a href="#">Two Gentlemen of Verona</a></li> 
+			<li id="win_tale.xml" class="playSelect"><a href="#">The Winter's Tale</a></li> 
+		</ul>
+	</div>
+</div>
+</div>
+				
+
+
+
+</div>  
+
+</body>
+</html>

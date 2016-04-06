@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css"/>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
+  
+  <script>
+  $(document).ready(function() {
+    $("#accordion").accordion();
+  });
+  </script>
+</head>
+<body style="font-size:62.5%;">
+  
+<div id="accordion">
+	<h3><a href="#">Section 1</a></h3>
+	<div>
+		<ul> 
+			<li id="a_and_c.xml" class="playSelect"><a href="#">Antony and Cleopatra</a></li> 
+		    <li id="coriolan.xml" class="playSelect"><a href="#">Coriolanus</a></li> 
+			<li id="hamlet.xml" class="playSelect"><a href="#">Hamlet</a></li> 
+			<li id="j_caesar.xml" class="playSelect"><a href="#">Julius Caesar</a></li> 
+			<li id="lear.xml" class="playSelect"><a href="#">King Lear</a></li> 
+			<li id="macbeth.xml" class="playSelect"><a href="#">Macbeth</a></li> 
+			<li id="othello.xml" class="playSelect"><a href="#">Othello</a></li> 
+			<li id="r_and_j.xml" class="playSelect"><a href="#">Romeo and Juliet</a></li> 
+			<li id="timon.xml" class="playSelect"><a href="#">Timon of Athens</a></li> 
+			<li id="titus.xml" class="playSelect"><a href="#">Titus Andronicus</a></li>		                 		          
+		</ul> 
+	</div>
+	<h3><a href="#">Section 2</a></h3>
+	<div>
+		<p>
+		Sed non urna. Donec et ante. Phasellus eu ligula. Vestibulum sit amet
+		purus. Vivamus hendrerit, dolor at aliquet laoreet, mauris turpis porttitor
+		velit, faucibus interdum tellus libero ac justo. Vivamus non quam. In
+		suscipit faucibus urna.
+		</p>
+	</div>
+	<h3><a href="#">Section 3</a></h3>
+	<div>
+		<p>
+		Nam enim risus, molestie et, porta ac, aliquam ac, risus. Quisque lobortis.
+		Phasellus pellentesque purus in massa. Aenean in pede. Phasellus ac libero
+		ac tellus pellentesque semper. Sed ac felis. Sed commodo, magna quis
+		lacinia ornare, quam ante aliquam nisi, eu iaculis leo purus venenatis dui.
+		</p>
+		<ul>
+			<li>List item one</li>
+			<li>List item two</li>
+			<li>List item three</li>
+		</ul>
+	</div>
+	<h3><a href="#">Section 4</a></h3>
+	<div>
+		<p>
+		Cras dictum. Pellentesque habitant morbi tristique senectus et netus
+		et malesuada fames ac turpis egestas. Vestibulum ante ipsum primis in
+		faucibus orci luctus et ultrices posuere cubilia Curae; Aenean lacinia
+		mauris vel est.
+		</p>
+		<p>
+		Suspendisse eu nisl. Nullam ut libero. Integer dignissim consequat lectus.
+		Class aptent taciti sociosqu ad litora torquent per conubia nostra, per
+		inceptos himenaeos.
+		</p>
+	</div>
+</div>
+
+</body>
+</html>

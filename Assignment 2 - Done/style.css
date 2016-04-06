@@ -1,0 +1,56 @@
+#title {
+width: 820px;
+height: 80px;
+padding: 0px;
+text-align: center;
+background-color: #f0f0f0;
+}
+
+#menu {
+width: 220px;
+height: 750px;
+padding: 0px 0px;
+background-color: #f0f0f0;
+float: left;
+}
+
+body {
+font-size: 12px;
+font-family: Verdana, Arial, SunSans-Regular, Sans-Serif;
+
+}
+
+#content {
+width: 600px;
+float: left;
+overflow: auto;
+}
+
+.button {
+width: 100%;
+}
+
+.act a{
+   color: royalblue;
+   font-weight:bold;
+ }
+
+ .scene a{
+   color: tomato;
+ }
+
+ .personae a{
+   color: gold;
+   font-weight:bold;
+   font-size: 1.3em;
+ }
+
+ .speaker{
+   color: gold;
+   font-weight:bold;
+ }
+
+ .stagedir{
+   color: tomato;
+   font-style:italic;
+ }

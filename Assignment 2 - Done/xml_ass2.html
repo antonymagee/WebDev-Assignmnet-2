@@ -1,0 +1,2432 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/2000/REC-xhtml1-20000126/DTD/xhtml1-transitional.dtd"> 
+
+ 
+
+<html xmlns="http://www.w3.org/1999/xhtml"> 
+
+<head> 
+
+	<meta http-equiv="content-type" content="text/html; charset=iso-8859-1" /> 
+
+	<title>COM554 Assignment 2 - Shakespeare Plays</title> 
+
+ 
+
+	<link rel="stylesheet" type="text/css" href="style.css" /><link type="text/css" href="css/antony/jquery-ui-1.8.16.custom.css" rel="stylesheet" /> 
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js"></script>
+	<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
+
+	
+
+	<!--  Load the .js file for the unique array plugin which is used to remove duplicates from an array of strings-->
+
+	<!--  Used in the populateSpeakers() & getNumberOfSpeakers() functions -->
+
+	<script type="text/javascript" src="js/jquery-uniqueArray.js"></script>
+
+	
+
+	<script> 
+
+	/**************************************************************************
+
+	** NOTES
+
+	** 
+
+	** All code has been tested using Firefox where it runs perfectly. 
+
+	**
+
+	** The search() and searchForLinesBySpeaker() functions have a hideous amount
+
+	** of code duplication but i ran out of time to refactor them into one awesome
+
+	** function :s i may also have gotten a little trigger happy with the TAB key :)
+
+	**
+
+	** The addEvents function was used as the events attached to some elements
+
+	** required access to the $(xml) wrapped set which wouldn't have existed at
+
+	** the document.ready stage so addEvents was used to add an event AFTER a play
+
+	** had been loaded.
+
+	**
+
+	**************************************************************************/		
+
+	$(document).ready (function() {
+
+		// Initialise jQueryUI elements
+
+		$("#accordion").accordion();	
+		$("#info_pane").dialog({ autoOpen: false });		
+
+		$('#home_button').button();		
+		$('#contents_button').button({ disabled: true });
+		$('#display_info_button').button({ disabled: true });
+		$('#go_button').button();
+		$('#help_button').button();
+
+		// Hide the search controls by default
+		$('#search_controls').hide();
+
+		// Initialise jQueryUI dialog box (info_pane)
+		$('#info_pane').dialog({ width: 400 });
+		$('#info_pane').dialog({ height: 300 });
+		
+
+		/**********************************************************************
+
+		** Event: Home button click event                    
+
+		** Reset page elements to their defaults      
+
+		**********************************************************************/
+
+		$('#home_button').click(function(event) {
+
+			// Clear the #output DIV and show the accordion menu
+
+			$("#output").empty();
+			$('#accordion').show();
+
+			// Change the page title
+
+			$("#header").empty();
+			$("#header").append('<br/><H1>Shakespeare Plays</</H1><br/>');			
+
+			
+
+			// Set state of sidebar buttons
+
+			// Contents and Display info button should be disabled until a play is selected
+
+			$('#contents_button').button( "option", "disabled", true );
+
+			$('#display_info_button').button( "option", "label", "Display play info" );
+
+			$('#display_info_button').button( "option", "disabled", true );
+
+			
+
+			// Set the value of the select_play box to its default
+
+			// & remove the options from the act & scene select boxes
+
+			$('#select_play').val('...');
+
+			$('#select_act > option').remove();
+
+			$('#select_scene > option').remove();
+
+			
+
+			// fade the search controls out to stop user
+
+			// from searching when a play has not been selected
+
+			$('#search_controls').fadeOut();
+
+		}) 		
+
+		
+
+		/**********************************************************************
+
+		** Event: '.playSelect' click event
+
+		** Clicking on a play name in the accordion will load the play
+
+		**********************************************************************/
+
+        $('.playSelect').click(function(event) {
+
+  	    	var playNameAsXML = $(this).attr('id');	
+
+        	openPlay(playNameAsXML);							
+
+        });
+
+
+
+		/**********************************************************************
+
+		** Event: 'Select a Play' dropdown click event
+
+		** Selecting a play name in the Play dropdown box will load the play
+
+		**********************************************************************/
+
+		$('#select_play').change(function(event){
+
+			var playNameAsXML = $(this).val();	
+
+			openPlay(playNameAsXML);					
+
+		});				
+
+		
+
+        /**********************************************************************
+
+		** Function: openPlay 
+
+		** Performs screen clean up and then calls loadPlayXML
+
+		**********************************************************************/
+
+        function openPlay(playNameAsXML){
+
+        	// Clear the #output DIV and hide the accordion menu
+
+			$("#output").empty();
+
+			$('#accordion').hide();
+
+			
+
+			// set state of sidebar buttons	
+
+			$('#display_info_button').button( "option", "label", "Display play info" );
+
+			$('#display_info_button').button( "option", "disabled", false );															
+
+			
+
+			// update the select_play dropdown box
+
+			$('#select_play').val(playNameAsXML);
+
+			
+
+			// Calls the function that will actually load the play
+
+          	loadPlayXML(playNameAsXML);        
+
+        }
+
+		
+
+		/**********************************************************************
+
+		** Event: '#help_button' click event
+
+		** Displays help boxes to aid the user with searching
+
+		**********************************************************************/
+
+		$('#help_button').click(function(event) {								
+
+			var position;
+
+			var offSetLeft;
+
+			var offSetTop;
+
+
+
+			// remove any events added to search_box using live()
+
+			$('#search_box').die();
+
+			
+
+			// fade out any on screen help boxes & then remove them from the DOM
+
+			removeHelpBoxes();
+
+			
+
+			var helpButtonText = $('#help_button').val();
+
+			// if help button's text is "Help!" then display help boxes
+
+			if ( helpButtonText == "Help!"){
+
+				$('#help_button').button( "option", "label", "Remove help boxes" );
+
+			
+
+				// Find position of the search box & decide on off set values
+
+				position = $('#search_box').position();
+
+				offSetLeft = position.left - 50;
+
+				offSetTop = position.top - 90;
+
+				
+
+				// Create help box for search, position it and fade it in
+
+				$('body').append("<div id='search_help' class='help_box'><p>Enter your keyword or phrase into the search box below</p></div>");
+
+				displayHelpBox("#search_help", offSetTop, offSetLeft);
+
+				
+
+				// show the help for the go button when user clicks in search box
+
+				$('#search_box').live('click', function(event) {
+
+					
+
+					// fade out any on screen help boxes & then remove them from the DOM
+
+					removeHelpBoxes();
+
+					
+
+					// Find position of the go button & decide on off set values
+
+					position = $('#go_button').position();
+
+					offSetLeft = position.left + 70;
+
+					offSetTop = position.top - 20;
+
+					
+
+					// Create help box for go button, position it and fade it in
+
+					$('body').append("<div id='go_help' class='help_box'><p>Click the Go button when you are ready</p></div>");
+
+					displayHelpBox("#go_help", offSetTop, offSetLeft);
+
+					
+
+					// Find position of the select act drop down & decide on off set values
+
+					position = $('#select_act').position();
+
+					offSetLeft = position.left + 220;
+
+					offSetTop = position.top + 10;
+
+					
+
+					// Create help box for act & scene drop downs, position it and fade it in
+
+					$('body').append("<div id='act_scene_help' class='help_box'><p>Use these drop down boxes to refine your search</p></div>");
+
+					displayHelpBox("#act_scene_help", offSetTop, offSetLeft);
+
+				});
+
+				
+
+				// Find position of the speaker drop down & decide on off set values
+
+				position = $('#select_speaker').position();
+
+				offSetLeft = position.left - 50;
+
+				offSetTop = position.top + 40;
+
+				
+
+				// Create help box for speaker drop down, position it and fade it in
+
+				$('body').append("<div id='speaker_help' class='help_box'><p>Select the speaker you wish to search for</p></div>");
+
+				displayHelpBox("#speaker_help", offSetTop, offSetLeft);
+
+							
+
+				// show the help for the act & scene drop downs when user clicks the speaker drop down
+
+				$('#select_speaker').live('click', function(event) {
+
+					
+
+					// fade out any on screen help boxes & then remove them from the DOM
+
+					removeHelpBoxes();
+
+					
+
+					// Find position of the select act drop down & decide on off set values
+
+					position = $('#select_act').position();
+
+					offSetLeft = position.left + 220;
+
+					offSetTop = position.top + 10;
+
+					
+
+					// Create help box for act & scene drop downs, position it and fade it in
+
+					$('body').append("<div id='act_scene_help' class='help_box'><p>Use these drop down boxes to refine your search</p></div>");
+
+					displayHelpBox("#act_scene_help", offSetTop, offSetLeft);
+
+				});	
+
+				
+
+			// ELSE remove the help boxes and set the buttons text back to "Help!"
+
+			} else {
+
+				$('#help_button').button( "option", "label", "Help!" );
+
+			}
+
+		});
+
+		
+
+		/**********************************************************************
+
+		** Function: displayHelpBox
+
+		** Fades the help box onto screen
+
+		**********************************************************************/
+
+		function displayHelpBox(id, offSetTop, offSetLeft){
+
+		
+
+			$(id).hide();
+
+			$(id).css("top", offSetTop).css("left", offSetLeft);
+
+			$(id).fadeIn();
+
+		}
+
+
+
+    }); // End of $(document).ready
+
+		
+
+	
+
+    /**************************************************************************
+
+    ** Function: loadPlayXML                      
+
+	** Uses ajax to load the XML file of the play from the plays folder. If
+
+	** succesful it will call the displayPlayContentsPage() function
+
+	**************************************************************************/
+
+    function loadPlayXML(playNameAsXML){
+
+        $.ajax({
+			type:"GET",
+			url: "plays/" + playNameAsXML,
+			dataType: "xml",
+			success: displayPlayContentsPage
+        });
+    };
+
+	
+
+    /**************************************************************************
+
+    ** Function: displayPlayTitle
+
+	** Displays the title of the play 
+
+	**************************************************************************/
+
+	function displayPlayTitle(xml){
+
+		$("#header").empty();
+
+		
+
+		$(xml).find("PLAY > TITLE").each(function(){
+
+		  $("#header").append('<br/><H1>' + $(this).text() + '</</H1><br/>');
+
+        });
+
+	}
+
+	
+
+	/**************************************************************************
+
+	** Function: displayPlayContentsPage                         
+
+	** Output the general layout of the play (acts, scenes, etc) to the 
+
+	** #output DIV
+
+	**************************************************************************/
+
+    function displayPlayContentsPage(xml){      
+
+      	var scene;  
+
+		
+
+		// update the drop down boxes with the values associated with the
+
+		// selected play.
+
+      	popActScene(xml);
+
+			
+
+      	displayPlayTitle(xml);
+
+		
+
+        // display the dramatis personae link
+
+        $("#output").append("<span class='personae'><a href='#'>Dramatis Personae</a></span><p>");
+
+        
+
+        // display the name of each ACT
+
+        $(xml).find("PLAY > ACT").each(function(){ 
+
+		  act = $(this).find('TITLE:first').text();
+
+		  $("#output").append('<span id="' + act + '" class="actLink"><a href="#">' + act + "</a></span><p>");
+
+          
+
+		  // display the name of each SCENE
+
+          $(this).find('SCENE').each(function(){          	          
+
+			scene = $(this).find("TITLE").text();
+
+			$("#output").append('<span id="' + scene + '" class="sceneLink"><a href="#">' + scene + '</a></span><br/>');    	                
+
+          });
+
+			$("#output").append("<br/>");
+
+        });
+
+		
+
+		// add click events to each link
+
+		addEvents(xml);
+
+		
+
+		// Fade in the search controls so the user can now search the selected play
+
+		$('#search_controls').fadeIn();
+
+	}
+
+	
+
+	/**************************************************************************
+
+	** Function: addEvents                                      
+
+	** Add events to html elements that have been created AFTER the DOM has 
+
+	** been loaded. It is used so that these events can have access to the 
+
+	** loaded xml of the play.
+
+	** ---
+
+	** The .live and .die methods are used to prevent a problem 
+
+	** were each element was getting an extra event attached for every call of 
+
+	** addEvents. 
+
+	**************************************************************************/
+
+	function addEvents(xml){
+
+		var selectedAct;
+
+		var selectedScene;
+
+		
+
+		// .die() removes any events already attached to each element
+
+		// this ensures that each time addEvents is called the elements
+
+		// will have ONE and only one event attached
+
+		$('#contents_button').die();
+
+		$('#display_info_button').die();
+
+		$('#select_act').die();
+
+		$('#select_scene').die();
+
+		$('#go_button').die();
+
+		$('#select_speaker').die();
+
+		$('span.personae').die();
+
+		$('span.actLink').die();
+
+		$('span.sceneLink').die();
+
+		
+
+		/**********************************************************************
+
+		** Event: 'span.actLink' click event
+
+		** Act names can be clicked resulting in the act page being loaded
+
+		**********************************************************************/
+
+		$('span.actLink').live('click', function(event) {
+
+			$("#output").empty();
+
+			
+
+			// set state of sidebar buttons
+
+			$('#contents_button').button({ disabled: false });
+
+			$('#display_info_button').button( "option", "label", "Display act info" );
+
+			$('#display_info_button').button({ disabled: false });						
+
+			
+
+			// display play title and selected act
+
+			displayPlayTitle(xml);
+
+			var selection = $(this).attr("id");
+
+			displayActContent(selection, xml);
+
+			selectedAct = selection;
+
+			
+
+			// update the select_act dropdown box
+
+			$('#select_act').val(selectedAct);						
+
+		});
+
+		
+
+		/**********************************************************************
+
+		** Event: 'span.sceneLink' click event
+
+		** Scene names can be clicked resulting in the scene page being loaded
+
+		**********************************************************************/
+
+		$('span.sceneLink').live('click', function(event) {
+
+			$("#output").empty();
+
+			
+
+			// set state of sidebar buttons
+
+			$('#contents_button').button({ disabled: false });
+
+			$('#display_info_button').button( "option", "label", "Display scene info" );
+
+			$('#display_info_button').button({ disabled: false });			
+
+ 
+
+			// display play title and selected scene
+
+			displayPlayTitle(xml);
+
+			var selection = $(this).attr("id");
+
+			selectedScene = selection;
+
+			
+
+			displaySceneContent(selection, xml);
+
+			
+
+			// populate & update the select_act * select_scene dropdown boxes			
+
+			currentAct = getActName(selectedScene, xml);
+
+			populateSelectBoxesAfterActIsChosen(currentAct, xml)
+
+			$('#select_act').val(currentAct);
+
+			
+
+			// update the select_scene dropdown box
+
+			$('#select_scene').val(selectedScene);			
+
+		});				
+
+		
+
+		/**********************************************************************
+
+		** Event: 'span.personae' click events
+
+		** Personae Dramatis can be clicked resulting in it being loaded
+
+		**********************************************************************/
+
+		$('span.personae').live('click', function(event) {
+
+			$("#output").empty();
+
+			
+
+			// set state of sidebar buttons (enable contents button)
+
+			$('#contents_button').button({ disabled: false });
+
+			
+
+			// display play title and selected scene
+
+			displayPlayTitle(xml);
+
+			displayPersonaeContent(xml);
+
+		});
+
+		
+
+		/**********************************************************************
+
+		** Event: '#contents_button' click event
+
+		** Clicking the Contents button returns to the page displaying the
+
+		** layout of the play
+
+		**********************************************************************/
+
+		$('#contents_button').live('click', function(event) {	
+
+			$("#output").empty();
+
+			
+
+			// set state of sidebar buttons
+
+			$('#contents_button').button({ disabled: true });  
+
+			
+
+			// display play contents page
+
+			displayPlayContentsPage(xml);			
+
+		});
+
+		
+
+		/**********************************************************************
+
+		** Event: '#display_info_button' click event
+
+		** Information of the current play/act/scene is displayed in a dialog
+
+		** The dialog to show is determined in the populateInfoPane() function
+
+		**********************************************************************/
+
+		$('#display_info_button').live('click', function(event) {	
+
+			populateInfoPane(selectedScene, selectedAct, xml);
+
+		});
+
+		
+
+		/**********************************************************************
+
+		** Event: '#select_act' change event
+
+		** Selecting an ACT loads its contents in the #output DIV
+
+		**********************************************************************/
+
+		$('#select_act').live('change', function(event) {
+
+			$("#output").empty();
+
+			$('#accordion').hide();
+
+			
+
+			// set state of sidebar buttons
+
+			$('#contents_button').button( "option", "disabled", false );		
+
+			$('#display_info_button').button( "option", "label", "Display act info" );
+
+			$('#display_info_button').button( "option", "disabled", false );
+
+			
+
+			// display play title and selected act
+
+			displayPlayTitle(xml);
+
+			var currentActName = $(this).val();			
+
+			displayActContent(currentActName, xml);
+
+		});
+
+		
+
+		/**********************************************************************
+
+		** Event: '#select_scene' change event
+
+		** Selecting an SCENE loads its contents in the #output DIV
+
+		**********************************************************************/
+
+		$('#select_scene').live('change', function(event) {	
+
+			$("#output").empty();
+
+			$('#accordion').hide();
+
+			
+
+			// set state of sidebar buttons
+
+			$('#contents_button').button( "option", "disabled", false );		
+
+			$('#display_info_button').button( "option", "label", "Display act info" );
+
+			$('#display_info_button').button( "option", "disabled", false );
+
+			
+
+			// display play title and selected scene
+
+			displayPlayTitle(xml);
+
+			var selectedScene = $(this).val();
+
+			displaySceneContent(selectedScene, xml);				
+
+		});
+
+		
+
+		/**********************************************************************
+
+		** Event: '#go_button' click event
+
+		** On click pass the value entered into the search box into the search() 
+
+		** function
+
+		**********************************************************************/
+
+		$('#go_button').live('click', function(event) {				
+
+			// remove any help boxes onscreen
+
+			removeHelpBoxes();
+
+			
+
+			$("#output").empty();
+
+			$('#accordion').hide();
+
+			
+
+			// set state of sidebar buttons
+
+			$('#contents_button').button( "option", "disabled", false );	
+
+			
+
+			searchPhrase = $('#search_box').val();			
+
+			search(searchPhrase, xml);			
+
+		});	
+
+		
+
+		/**********************************************************************
+
+		** Event: '#select_speaker' change event
+
+		** pass the speaker selected in the select_speaker drop down box into 
+
+		** the searchForLinesBySpeaker() function
+
+		**********************************************************************/
+
+		$('#select_speaker').live('change', function(event) {		  	    	
+
+			$("#output").empty();
+
+			$('#accordion').hide();
+
+			
+
+			// set state of sidebar buttons
+
+			$('#contents_button').button( "option", "disabled", false );					
+
+	
+
+			var speaker = $(this).val();			
+
+			searchForLinesBySpeaker(speaker, xml);
+
+		});	
+
+		
+
+	} // End of addEvents()
+
+	
+
+	/**************************************************************************
+
+	** Function: search
+
+	** Searches the play xml for the passed in KEYWORD. While searching it keeps
+
+	** track of which act and scene a line was found in and who said it.
+
+	** ---
+
+	** The scope of the search is determined by the drop down boxes. For example
+
+	** if ACT II has been selected then the search will be restricted to that
+
+	** act's contents.
+
+	**************************************************************************/
+
+	function search(searchPhrase, xml){
+
+		var numberOfResults = 0;
+
+		var selectedAct = $('#select_act').val();
+
+		var selectedScene = $('#select_scene').val();
+
+		var thisSpeaker;
+
+		
+
+		// if search box is empty don't bother searching
+
+		if(searchPhrase != ""){
+
+			$("#output").empty();
+
+			$('#accordion').hide();
+
+			
+
+			displayPlayTitle(xml);
+
+			
+
+			// Display search info at top of page
+
+			$("#output").append("<br/><span>Search results for: \"" + searchPhrase + "\" --</span><span id='results_placeholder'></span>");
+
+			$("#output").append("<p><br/><br/>");
+
+			
+
+			// IF no ACT has been selected THEN search entire PLAY
+
+			if(selectedAct == "..."){	
+
+				
+
+				// Search through the play, recording the act and scene the line is found in
+
+				$(xml).find('ACT').each(function(){
+
+					thisAct = $(this).find("TITLE:first").text();
+
+					
+
+					$(this).find('SCENE').each(function(){
+
+						thisScene = $(this).find("TITLE:first").text();
+
+						
+
+						$(this).find('LINE:contains(' + searchPhrase + ')').each(function(){
+
+							
+
+							// Display the line that is found along with who spoke it, and in what act and scene
+
+							// it was found in
+
+							thisSpeaker = $(this).parent().find('SPEAKER:first').text();
+
+							$("#output").append("<span>Said by</span><span class='purple'>" + thisSpeaker 
+
+							+ "</span><span>in</span><span class='orange'>" + thisAct + " " + thisScene + "</span><br/>");
+
+							
+
+							$("#output").append("<span class='search_result'>" + $(this).text() + "</span><p>");
+
+							numberOfResults++; // keep track of how many matches have been found
+
+						});					
+
+					});
+
+				}); 
+
+			// ELSE IF an ACT has been selected but a SCENE has not THEN search the selected ACT
+
+			} else if((selectedAct != "...") && (selectedScene == "...")){
+
+			
+
+				// Search through the selected ACT, recording the act and scene the line is found in
+
+				$(xml).find('ACT').each(function(){
+
+					thisAct = $(this).find("TITLE:first").text();
+
+					
+
+					// IF the current act is the act the user selected to search within THEN
+
+					if (thisAct == selectedAct){
+
+						$(this).find('SCENE').each(function(){
+
+							thisScene = $(this).find("TITLE:first").text();
+
+							
+
+							$(this).find('LINE:contains(' + searchPhrase + ')').each(function(){
+
+								
+
+								// Display the line that is found along with who spoke it, and in what act and scene
+
+								// it was found in
+
+								thisSpeaker = $(this).parent().find('SPEAKER:first').text();
+
+								$("#output").append("<span>Said by</span><span class='purple'>" + thisSpeaker 
+
+								+ "</span><span>in</span><span class='orange'>" + thisAct + " " + thisScene + "</span><br/>");
+
+								
+
+								$("#output").append("<span class='search_result'>" + $(this).text() + "</span><p>");
+
+								numberOfResults++; // keep track of how many matches have been found
+
+							});						
+
+						});
+
+					} // End of IF block: if (thisAct == selectedAct)
+
+				});			
+
+			// ELSE IF an ACT & a SCENE have been selected THEN search within that specific SCENE
+
+			} else if((selectedAct != "...") && (selectedScene != "...")){
+
+			
+
+				// Search through the play, recording the act and scene the line is found in
+
+				$(xml).find('ACT').each(function(){
+
+					thisAct = $(this).find("TITLE:first").text();
+
+					
+
+					// IF the current act is the act the user selected to search within THEN
+
+					if (thisAct == selectedAct){
+
+						$(this).find('SCENE').each(function(){
+
+							thisScene = $(this).find("TITLE:first").text();
+
+							
+
+							// IF the current scene is the scene the user selected to search within THEN
+
+							if (thisScene == selectedScene){
+
+								$(this).find('LINE:contains(' + searchPhrase + ')').each(function(){
+
+									
+
+									// Display the line that is found along with who spoke it, and in what act and scene
+
+									// it was found in
+
+									thisSpeaker = $(this).parent().find('SPEAKER:first').text();
+
+									$("#output").append("<span>Said by</span><span class='purple'>" + thisSpeaker 
+
+									+ "</span><span>in</span><span class='orange'>" + thisAct + " " + thisScene + "</span><br/>");
+
+									
+
+									$("#output").append("<span class='search_result'>" + $(this).text() + "</span><p>");
+
+									numberOfResults++; // keep track of how many matches have been found
+
+								});
+
+							} // End of IF block: if (thisScene == selectedScene)
+
+						
+
+						});
+
+					} // End of IF block: if (thisAct == selectedAct)
+
+				});								
+
+			} // End of IF...ELSE IF block
+
+
+
+			// Append the number of found matches to the info line at the top of the page
+
+			$("#results_placeholder").text("Found " + numberOfResults + " matches.");
+
+			
+
+		} // End of IF block
+
+	}
+
+	
+
+	/**************************************************************************
+
+	** Function: searchForLinesBySpeaker
+
+	** Searches the play xml for the passed in SPEAKER. While searching it keeps
+
+	** track of which act and scene a line was found in and who said it.
+
+	** ---
+
+	** The scope of the search is determined by the drop down boxes. For example
+
+	** if ACT II has been selected then the search will be restricted to that
+
+	** act's contents
+
+	**************************************************************************/
+
+	function searchForLinesBySpeaker(speaker, xml){
+
+	
+
+		var numberOfResults = 0;
+
+		var numberOfLines = 0;
+
+		
+
+		var selectedAct = $('#select_act').val();
+
+		var selectedScene = $('#select_scene').val();
+
+		
+
+		var act;
+
+		var scene;
+
+		
+
+		$("#output").append("<br/><span>Search results for: \"<span class='purple'>" + speaker 
+
+		+ "</span>\" --</span><span id='results_placeholder'></span><p>");
+
+	
+
+		// IF no ACT has been selected THEN search entire PLAY
+
+		if(selectedAct == "..."){	
+
+			$(xml).find('ACT').each(function(){					
+
+				thisAct = $(this).find("TITLE:first").text();
+
+				
+
+				$(this).find('SCENE').each(function(){
+
+					thisScene = $(this).find("TITLE:first").text();
+
+
+
+					$(this).find('SPEECH:contains(' + speaker + ')').each(function(){
+
+						$("#output").append("<span>Found in</span><span class='orange'>" + thisAct + " " + thisScene + "</span><br/>");
+
+						
+
+						$(this).find('LINE').each(function(){
+
+							
+
+							$("#output").append("<span class='search_result'>" + $(this).text() + "</span><br/>");
+
+							numberOfLines++;
+
+						});
+
+						$("#output").append("<br/>");
+
+						numberOfResults++;
+
+					});
+
+				});
+
+			});
+
+		// ELSE IF an ACT has been selected but a SCENE has not THEN search the selected ACT	
+
+		} else if((selectedAct != "...") && (selectedScene == "...")){
+
+			$(xml).find('ACT').each(function(){					
+
+				thisAct = $(this).find("TITLE:first").text();
+
+				
+
+				// IF the current act is the act the user selected to search within THEN
+
+				if (thisAct == selectedAct){	
+
+					$(this).find('SCENE').each(function(){
+
+						thisScene = $(this).find("TITLE:first").text();
+
+
+
+						$(this).find('SPEECH:contains(' + speaker + ')').each(function(){
+
+							$("#output").append("<span>Found in</span><span class='orange'>" + thisAct + " " + thisScene + "</span><br/>");
+
+							
+
+							$(this).find('LINE').each(function(){
+
+								
+
+								$("#output").append("<span class='search_result'>" + $(this).text() + "</span><br/>");
+
+								numberOfLines++;
+
+							});
+
+							$("#output").append("<br/>");
+
+							numberOfResults++;
+
+						});
+
+					});
+
+				} // End of IF: if (thisAct == selectedAct)
+
+			});
+
+		// ELSE IF an ACT & a SCENE have been selected THEN search within that specific SCENE
+
+		} else if((selectedAct != "...") && (selectedScene != "...")){
+
+			$(xml).find('ACT').each(function(){					
+
+				thisAct = $(this).find("TITLE:first").text();
+
+				
+
+				// IF the current act is the act the user selected to search within THEN
+
+				if (thisAct == selectedAct){	
+
+					$(this).find('SCENE').each(function(){
+
+						thisScene = $(this).find("TITLE:first").text();
+
+						
+
+						// IF the current scene is the scene the user selected to search within THEN
+
+						if (thisScene == selectedScene){	
+
+							$(this).find('SPEECH:contains(' + speaker + ')').each(function(){
+
+								$("#output").append("<span>Found in</span><span class='orange'>" + thisAct + " " + thisScene + "</span><br/>");
+
+								
+
+								$(this).find('LINE').each(function(){
+
+									
+
+									$("#output").append("<span class='search_result'>" + $(this).text() + "</span><br/>");
+
+									numberOfLines++;
+
+								});
+
+								$("#output").append("<br/>");
+
+								numberOfResults++;
+
+							});
+
+						} // End of IF: if (thisScene == selectedScene)
+
+					});
+
+				} // End of IF: if (thisAct == selectedAct)
+
+			});
+
+		} // End of IF block
+
+		
+
+		// Append the number of lines to the info line at the top of the page
+
+		$("#results_placeholder").text(speaker + " said " + numberOfLines + " lines.");	
+
+	}
+
+
+
+	/**************************************************************************
+
+	** Function: displayActContent
+
+	** Display the contents of an act when it has been selected.
+
+	**************************************************************************/
+
+	function displayActContent(selectedAct, xml){
+
+	
+
+		// populates the select boxes in the sidebar				
+
+		populateSelectBoxesAfterActIsChosen(selectedAct, xml);
+
+		
+
+		$(xml).find('ACT').each(function(){			
+
+			
+
+			// if this iterations act is equal to the passed in act
+
+			if ($(this).find("TITLE:first").text() == selectedAct){	
+
+				act = $(this).find('TITLE:first').text();
+
+		  		$("#output").append('<span class="actLink">' + act + "</span><p>");
+
+				
+
+				$(this).find("SCENE").each(function(){
+
+					scene = $(this).find("TITLE").text();
+
+					$("#output").append('<span id="' + scene + '" class="sceneLink"><a href="#">' + scene + '</a></span><br/>');    					
+
+				});
+
+			} // End of IF: if ($(this).find("TITLE:first").text() == selectedAct)
+
+		});
+
+	}
+
+    
+
+	/**************************************************************************
+
+	** Function: displaySceneContent
+
+	** Display the contents of the scene such as stage directions and speeches
+
+	**************************************************************************/
+
+	function displaySceneContent(selectedScene, xml){
+
+		var elementType;
+
+		var lineNumber = 1;
+
+		var actName;
+
+ 
+
+		// Get the ACT this scene is inside
+
+		actName = getActName(selectedScene, xml);
+
+				
+
+		// iterate over each SCENE
+
+		$(xml).find("SCENE").each(function() {				
+
+			
+
+			// if SCENE is the one the user clicked on then..
+
+			if ($(this).find("TITLE").text() == selectedScene){													
+
+			
+
+				// display the child elements of the SCENE
+
+				$(this).children().each(function() {						
+
+					
+
+					// switch based on the element type: "TITLE"/"STAGEDIR"/etc
+
+					elementType = $(this).get(0).tagName;
+
+					switch (elementType){
+
+					case "TITLE":
+
+						$("#output").append("<span class='title'>" + actName + " " + $(this).text() + "</span><p>");
+
+						break;
+
+					case "STAGEDIR":
+
+						$("#output").append("<br/><span class='stagedir'>[" + $(this).text() + "]</span><br/>");
+
+						break;
+
+					case "SPEECH":
+
+					  
+
+						$(this).find("SPEAKER:first").each(function() {										  
+
+							$("#output").append("<span class='speaker'>" + $(this).text() + "</span><br/>");
+
+						});
+
+						$(this).find("LINE").each(function() {										  
+
+							$("#output").append("<span class='speech'>" + $(this).text() + "</span>");
+
+							printLineNumber(lineNumber, elementType);					  
+
+							 lineNumber++;
+
+						  });
+
+						  $("#output").append("<br/>");
+
+					  break;						
+
+					} // End of SWITCH block
+
+				});
+
+			} // end of IF
+
+		});				
+
+	}
+
+	
+
+	/**************************************************************************
+
+	** Function: displayPersonaeContent
+
+	** Display the contents of the current plays dramatis personae page
+
+	**************************************************************************/
+
+	function displayPersonaeContent(xml){
+
+		var childType;
+
+ 		
+
+		$(xml).find("PLAY > PERSONAE").children().each(function() {						
+
+			childType = $(this).get(0).tagName;
+
+			
+
+			// if child is of type TITLE then output it with style, otherwise output it normally
+
+			if (childType == "TITLE"){
+
+				$("#output").append('<span class="title">' + $(this).text() + '</span><p>');
+
+			} else {
+
+				$("#output").append('<span>' + $(this).text() + '</span><p>');
+
+			}			
+
+		});
+
+		
+
+		$("#output").append("<p>");
+
+	}
+
+	
+
+	/**************************************************************************
+
+	** Function: getActName
+
+	** Returns the Act that is associated with the passed in scene
+
+	**************************************************************************/  
+
+	function getActName(selectedScene, xml){
+
+		var currentAct;
+
+		var actName;
+
+		var currentScene;
+
+ 
+
+		$(xml).find("PLAY > ACT > TITLE").each(function() {
+
+		currentAct = $(this).text();
+
+		
+
+			$(this).parent().find('> SCENE > TITLE').each(function(){		
+
+				currentScene = $(this).text();		
+
+				
+
+				// IF the SCENE in this iteration is the same as the scene that was
+
+				// passed in then set actName to the ACT this loop is currently on
+
+				// which will be the ACT that this SCENE is inside
+
+				if(currentScene == selectedScene){
+
+					actName = currentAct;		
+
+				}					
+
+			});		
+
+		});
+
+		return actName;
+
+      }
+
+    
+
+	/**************************************************************************
+
+	** Function: printLineNumber
+
+	** Determines whether the line number should be outputted. In this case 
+
+	** every 5th line should have its number displayed
+
+	**************************************************************************/ 
+
+  	function printLineNumber(lineNumber, elementType){
+
+		if (((lineNumber % 5) == 0) && (lineNumber != 0) && (elementType != "STAGEDIR")){
+
+			$("#output").append(" " + lineNumber + "<br/>");
+
+		} else {
+
+			$("#output").append("<br/>");
+
+		}
+
+	}
+
+	
+
+	/**************************************************************************
+
+	** Function: populateInfoPane
+
+	** Populates the info pane with the appropriate information. For example, 
+
+	** if the display_info_button has the value of 'display play info' then it 
+
+	** will be tailored to show just play information
+
+	**************************************************************************/
+
+	function populateInfoPane(selectedScene, selectedAct, xml){
+
+		var title;
+		var numberOfLines;
+		var numberOfActs;
+		var numberOfScenes;
+		var numberOfSpeakers;
+		
+
+		// Sets dialogType to the value of the '#display_info_button' text
+		var dialogType = $('#display_info_button').button("option", "label");	
+
+		$("#info_pane").empty(); // Clear the content already in the dialog
+
+		// Show PLAY information
+
+		if(dialogType == "Display play info"){
+		
+			title = $(xml).find('TITLE:first').text();
+			numberOfLines = $(xml).find('LINE').size();
+			numberOfActs = $(xml).find('ACT').size();
+			numberOfScenes = $(xml).find('SCENE').size();
+			numberOfSpeakers = getNumberOfSpeakers(xml);
+
+			
+
+			// Dialog boxes text
+
+			$("#info_pane").append('<span class="detail">' + title + '</span><br/>');
+			$("#info_pane").append('<br/>');
+			$("#info_pane").append('<span>This play contains...</span><br/>');
+			$("#info_pane").append('<br/>');
+			$("#info_pane").append('<span class="detail">' + numberOfLines + '</span><span> lines.</span><br/>');
+			$("#info_pane").append('<span class="detail">' + numberOfActs + '</span><span> acts.</span><br/>');
+			$("#info_pane").append('<span class="detail">' + numberOfScenes + '</span><span> scenes.</span><br/>');
+			$("#info_pane").append('<span class="detail">' + numberOfSpeakers + '</span><span> speakers.</span><br/>');
+
+			
+
+			
+
+		} 
+
+		// Show ACT information
+
+		else if(dialogType == "Display act info"){			
+
+	
+
+			$(xml).find("ACT").each(function(){	
+
+
+
+				// IF this iterations ACT is the ACT the user is looking at THEN
+
+				if(($(this).find("TITLE:first").text()) == act){
+
+					numberOfLines = $(this).find('LINE').size();
+
+					numberOfScenes = $(this).find("SCENE").size();
+
+					numberOfSpeakers = getNumberOfSpeakers($(this));
+
+				}			
+
+			});
+
+			
+
+			// Dialog boxes text
+
+			$("#info_pane").append('<span>This act contains...</span><br/>');
+
+			$("#info_pane").append('<br/>');
+
+			$("#info_pane").append('<span class="detail">' + numberOfLines + '</span><span> lines.</span><br/>');
+
+			$("#info_pane").append('<span class="detail">' + numberOfScenes + '</span><span> scenes.</span><br/>');
+
+			$("#info_pane").append('<span class="detail">' + numberOfSpeakers + '</span><span> speakers.</span><br/>');
+
+		}
+
+		// Show SCENE information
+
+		else if(dialogType == "Display scene info"){
+
+							
+
+			$(xml).find("SCENE").each(function(){
+
+
+
+				// IF this iterations SCENE is the SCENE the user is looking at THEN
+
+				if(($(this).find("TITLE:first").text()) == selectedScene){
+
+					numberOfLines = $(this).find('LINE').size();
+
+					numberOfSpeakers = getNumberOfSpeakers($(this));
+
+				}			
+
+			});
+
+			
+
+			// Dialog boxes text
+
+			$("#info_pane").append('<span>This scene contains...</span><br/>');
+
+			$("#info_pane").append('<br/>');
+
+			$("#info_pane").append('<span class="detail">' + numberOfLines + '</span><span> lines.</span><br/>');
+
+			$("#info_pane").append('<span class="detail">' + numberOfSpeakers + '</span><span> speakers.</span><br/>');
+
+		}
+
+		
+
+		// Open the dialog now that it has been filled with content
+
+		$("#info_pane").dialog('open');
+
+	}
+
+	
+
+	/**************************************************************************
+
+	** Function: popActScene
+
+	** Populates the act and scene select boxes when the play contents screen 
+
+	** is being displayed. The ACT select box will be filled with each ACTs
+
+	** name. The SCENE select will just have a default "..." option in it.
+
+	**************************************************************************/
+
+	function popActScene(xml){
+
+			
+
+		// empty the previous contents of both select
+
+		$('#select_act > option').remove();
+
+		$('#select_scene > option').remove();
+
+		$('#select_speaker > option').remove();
+
+		
+
+		// sets a default option for each box (...)
+
+		$("<option selected='yes'>...</option>").appendTo("#select_act");
+
+		$("<option selected='yes'>...</option>").appendTo("#select_scene");
+
+		
+
+		// Populates the act dropdown box with ACT names
+
+		$(xml).find("PLAY > ACT").each(function(){ 
+
+		  	
+
+			// populate the #select_act box with the act names
+
+			act = $(this).find('TITLE:first').text();
+
+			$("<option value='" + act + "'>" + act + "</option>").appendTo("#select_act");						
+
+		});
+
+		
+
+		// Populate the speakers dropdown box used for searching
+
+		populateSpeakers(xml);
+
+	}
+
+	
+
+	/**************************************************************************
+
+	** Function: populateSelectBoxesAfterActIsChosen
+
+	** Populates the act and scene select boxes when the play contents screen 
+
+	** is being displayed. Both ACT and SCENE select boxes will have their 
+
+	** respective options filled in
+
+	**************************************************************************/
+
+	function populateSelectBoxesAfterActIsChosen(selectedAct, xml){
+
+		
+
+		// empty the previous contents of the SCENE dropdown box
+
+		$('#select_scene > option').remove();	
+
+
+
+		// sets a default option for the SCENE box (...)
+
+		$("<option selected='yes'>...</option>").appendTo("#select_scene");
+
+		
+
+		$(xml).find('ACT').each(function(){
+
+			
+
+			// IF the this iterations ACT is the same as the selected ACT THEN
+
+			if ($(this).find("TITLE:first").text() == selectedAct){	
+
+				act = $(this).find('TITLE:first').text();
+
+				
+
+				// Populates the scene dropdown box with SCENE names of this ACT
+
+				$(this).find('SCENE').each(function(){
+
+					scene = $(this).find("TITLE").text();
+
+					$('<option value="' + scene + '">' + scene + '</option>').appendTo("#select_scene");					
+
+				});
+
+			}
+
+		});
+
+	}
+
+	
+
+	/**************************************************************************
+
+	** Function: populateSpeakers
+
+	** Populate the speakers drop down box with the UNIQUE set of speakers in 
+
+	** the play. To find the unique speakers in the ACT or SCENE you simply pass
+
+	** that ACT or SCENE in to this function instead of passing in the whole play
+
+	**
+
+	** ##########################################################################
+
+	** :( actually now that i think of it this is probably how I should've wrote
+
+	** every other function as dealing with huge nested IF's is poison ... DAMN!!
+
+	**************************************************************************/
+
+	function populateSpeakers(xml){
+
+		// Find the size of the set of speakers (will have duplicates)
+
+		// Use this variable to set the inital size of the array
+
+		var size = $(xml).find('SPEAKER').size();
+
+		var myArray = new Array(size);
+
+		
+
+		// Iterate over each speaker and add them to the aray
+
+		var x = 0;
+
+		$(xml).find('SPEAKER').each(function(){
+
+			myArray[x] = $(this).text();
+
+			x++;
+
+		});
+
+		
+
+		// Use this nifty jQuery plugin to reduce the array to an array
+
+		// of unique names/strings
+
+		myArray = $.uniqueArray(myArray);
+
+
+
+		// Set a default value for teh speaker select box
+
+		$("<option selected='yes'>...</option>").appendTo("#select_speaker");
+
+		
+
+		// Iterate over the array using the for..each functionality in jQuery
+
+		// adding each name to the speaker select box as an option
+
+		x = 0;
+
+		$.each(myArray, function() { 
+
+			name = myArray[x]
+
+			$('<option value="' + name + '">' + name + '</option>').appendTo("#select_speaker");
+
+			x++;
+
+		});
+
+	} 
+
+	
+
+	/**************************************************************************
+
+	** Function: getNumberOfSpeakers
+
+	** Like the populateSpeakers() function except it returns the size of set
+
+	** of unique speakers within the passed in play/act/scene however it returns
+
+	** the size of the array instead of populating the speakers select box
+
+	**************************************************************************/
+
+	function getNumberOfSpeakers(xml){
+
+		// Find the size of the set of speakers (will have duplicates)
+
+		// Use this variable to set the inital size of the array
+
+		var size = $(xml).find('SPEAKER').size();
+
+		var myArray = new Array(size);
+
+		
+
+		// Iterate over each speaker and add them to the aray
+
+		var x = 0;
+
+		$(xml).find('SPEAKER').each(function(){
+
+			myArray[x] = $(this).text();
+
+			x++;
+
+		});
+
+		
+
+		// Use this nifty jQuery plugin to reduce the array to an array
+
+		// of unique names/strings
+
+		myArray = $.uniqueArray(myArray);
+
+		
+
+		// return the size of the array
+
+		return myArray.length;
+
+	}
+
+	
+
+	/**************************************************************************
+
+	** Function: removeHelpBoxes
+
+	** Fades out all help boxes on screen and then removes them from the DOM
+
+	**************************************************************************/
+
+	function removeHelpBoxes(){
+
+		$('#search_help').fadeOut();
+
+		$('#speaker_help').fadeOut();
+
+		$('#go_help').fadeOut();
+
+		$('#act_scene_help').fadeOut();
+
+		
+
+		$('#search_help').remove();
+
+		$('#speaker_help').remove();
+
+		$('#act_scene_help').remove();
+
+		$('#go_help').remove();		
+
+	}
+
+	</script> 
+
+</head> 
+
+ 
+
+<body> 
+
+	<div id="top_spacer"></div> <!-- top_spacer --> 
+
+	
+
+	<div id="box_site"> 
+
+		<div id="header"> 
+
+		<br/> 
+
+			<h1>Shakespeare Plays</h1> 
+
+		</div> 
+
+		
+
+		<!-- end of header --> 
+
+		
+
+		<!-- ################ --> 
+
+		<!-- start of sidebar --> 
+
+		<!-- ################ --> 
+
+		
+
+		<div id="sidebar"> 
+
+			<input type="button" id="home_button" class="button" value="Home"><br/>  
+
+			<input type="button" id="display_info_button" class="button" value="Display play info"> 
+			
+			<input type="button" id="contents_button" class="button" value="Contents"><br/>
+
+			<br/> 
+
+			
+
+			
+
+			<div id="drop_down_menus"> 
+
+				
+
+				<p>
+
+				<span class="sideBarText">Select a Play..</span> 
+
+				
+
+				<select id="select_play">		    
+
+				<option selected="yes">...</option> 
+
+				<option value="heading" class="select_heading">Tragedies</option> 
+
+				<option value="a_and_c.xml">Antony and Cleopatra</option> 
+
+				<option value="coriolan.xml">Coriolanus</option> 
+
+				<option value="hamlet.xml">Hamlet</option> 
+
+				<option value="j_caesar.xml">Julius Caesar</option> 
+
+				<option value="lear.xml">King Lear</option> 
+
+				<option value="macbeth.xml">Macbeth</option> 
+
+				<option value="othello.xml">Othello</option> 
+
+				<option value="r_and_j.xml">Romeo and Juliet</option> 
+
+				<option value="timon.xml">Timon of Athens</option> 
+
+				<option value="titus.xml">Titus Andronicus</option> 
+
+				
+
+				<option value="heading" class="select_heading"></option> 
+
+				<option value="heading" class="select_heading">Histories</option> 
+
+				<option value="hen_iv_1.xml">Henry IV, Part I</option> 
+
+				<option value="hen_iv_2.xml">Henry IV, Part II</option> 
+
+				<option value="hen_v.xml">Henry V</option> 
+
+				<option value="hen_vi_1.xml">Henry VI, Part I</option> 
+
+				<option value="hen_vi_2.xml">Henry IV, Part II</option> 
+
+				<option value="hen_vi_3.xml">Henry IV, Part III</option> 
+
+				<option value="hen_viii.xml">Henry VIII</option> 
+
+				<option value="john.xml">King John</option> 
+
+				<option value="rich_ii.xml">Richard II</option> 
+
+				<option value="rich_iii.xml">Richard II</option> 
+
+				
+
+				<option value="heading" class="select_heading"></option> 
+
+				<option value="heading" class="select_heading">Comedies</option> 
+
+				<option value="all_well.xml">All's Well That Ends Well</option> 
+
+				<option value="as_you.xml">As You Like It</option> 
+
+				<option value="com_err.xml">The Comedy of Errors</option> 
+
+				<option value="cymbelin.xml">Cymbeline</option> 
+
+				<option value="lll.xml">Love's Labours Lost</option> 
+
+				<option value="m_for_m.xml">Measure for Measure</option> 
+
+				<option value="m_wives.xml">The Mercy Wives of Windsor</option> 
+
+				<option value="merchant.xml">The Merchant of Venice</option> 
+
+				<option value="dream.xml">A Midsummer Night's Dream</option> 
+
+				<option value="much_ado.xml">Much Ado About Nothing</option> 
+
+				<option value="pericles.xml">Pericles, Prince of Tyre</option> 
+
+				<option value="taming.xml">The Taming of the Shrew</option> 
+
+				<option value="tempest.xml">The Tempest</option> 
+
+				<option value="troilus.xml">Troilus and Cressida</option> 
+
+				<option value="t_night.xml">Twelfth Night</option> 
+
+				<option value="two_gent.xml">Two Gentlemen of Verona</option> 
+
+				<option value="win_tale.xml">The Winter's Tale</option> 
+
+				</select> 
+
+				</p>
+
+				
+
+				<p></p> 
+
+				
+
+				<p>
+
+				<span class="sideBarText">Select an Act..</span>				
+
+				<select id='select_act'></select> 
+
+				</p>
+
+				
+
+				<p></p> 
+
+				
+
+				<p>
+
+				<span class="sideBarText">Select a Scene..</span>				
+
+				<select id='select_scene'></select> 
+
+				</p>
+
+				
+
+				<p></p> 
+
+				<br/><br/><br/> 
+
+				<p id="search_controls"> 
+
+				<span class="sideBarText">Search by Keyword</span>				
+
+				<input type="textbox" id='search_box'>
+
+				<input type="button" id="go_button" class="go_button" value="Go"><br/> 
+
+				
+
+				<br/>
+
+				
+
+				<span class="sideBarText">Search by Speaker</span>				
+
+				<select id='select_speaker'></select>  
+
+				 
+
+				
+
+				<br/><br/><br/> 
+
+				
+
+				
+
+				<input type="button" id="help_button" class="button" value="Help!"><br/> 
+
+				</p>
+
+				
+
+				
+
+		  </div> 
+
+		</div>  
+
+		
+
+		<!-- end of sidebar --> 
+
+		
+
+		
+
+		<!-- ################ --> 
+
+		<!-- start of content --> 
+
+		<!-- ################ --> 
+
+			
+
+		<div id="content"> 
+
+	
+
+			<div id="accordion"> 
+
+ 
+
+			  <h3><a href="#">Tragedies</a></h3> 
+
+		      <div> 
+
+		        <ul> 
+
+		          <li id="a_and_c.xml" class="playSelect"><a href="#">Antony and Cleopatra</a></li> 
+
+		          <li id="coriolan.xml" class="playSelect"><a href="#">Coriolanus</a></li> 
+
+		          <li id="hamlet.xml" class="playSelect"><a href="#">Hamlet</a></li> 
+
+		          <li id="j_caesar.xml" class="playSelect"><a href="#">Julius Caesar</a></li> 
+
+		          <li id="lear.xml" class="playSelect"><a href="#">King Lear</a></li> 
+
+		          <li id="macbeth.xml" class="playSelect"><a href="#">Macbeth</a></li> 
+
+		          <li id="othello.xml" class="playSelect"><a href="#">Othello</a></li> 
+
+		          <li id="r_and_j.xml" class="playSelect"><a href="#">Romeo and Juliet</a></li> 
+
+		          <li id="timon.xml" class="playSelect"><a href="#">Timon of Athens</a></li> 
+
+		          <li id="titus.xml" class="playSelect"><a href="#">Titus Andronicus</a></li>		                 		          
+
+		        </ul> 
+
+		      </div> 
+
+					      
+
+			  <h3><a href="#">Histories</a></h3> 
+
+		      <div> 
+
+		        <ul> 
+
+		          <li id="hen_iv_1.xml" class="playSelect"><a href="#">Henry IV, Part I</a></li> 
+
+		          <li id="hen_iv_2.xml" class="playSelect"><a href="#">Henry IV, Part II</a></li> 
+
+		          <li id="hen_v.xml" class="playSelect"><a href="#">Henry V</a></li> 
+
+		          <li id="hen_vi_1.xml" class="playSelect"><a href="#">Henry VI, Part I</a></li> 
+
+		          <li id="hen_vi_2.xml" class="playSelect"><a href="#">Henry VI, Part II</a></li> 
+
+		          <li id="hen_vi_3.xml" class="playSelect"><a href="#">Henry VI, Part III</a></li> 
+
+		          <li id="hen_viii.xml" class="playSelect"><a href="#">Henry VIII</a></li> 
+
+		          <li id="john.xml" class="playSelect"><a href="#">King John</a></li> 
+
+		          <li id="rich_ii.xml" class="playSelect"><a href="#">Richard II</a></li> 
+
+		          <li id="rich_iii.xml" class="playSelect"><a href="#">Richard III</a></li>          		          
+
+		        </ul> 
+
+		      </div> 
+
+			
+
+			  <h3><a href="#">Comedies</a></h3> 
+
+		      <div> 
+
+		      <ul>		          
+
+			      <li id="all_well.xml" class="playSelect"><a href="#">All's Well That Ends Well</a></li> 
+
+			      <li id="as_you.xml" class="playSelect"><a href="#">As You Like It</a></li> 
+
+			      <li id="com_err.xml" class="playSelect"><a href="#">The Comedy of Errors</a></li> 
+
+			      <li id="cymbelin.xml" class="playSelect"><a href="#">Cymbeline</a></li> 
+
+			      <li id="lll.xml" class="playSelect"><a href="#">Love's Labours Lost</a></li> 
+
+			      <li id="m_for_m.xml" class="playSelect"><a href="#">Measure for Measure</a></li> 
+
+			      <li id="m_wives.xml" class="playSelect"><a href="#">The Merry Wives of Windsor</a></li> 
+
+			      <li id="merchant.xml" class="playSelect"><a href="#">The Merchant of Venice</a></li>	
+
+			      <li id="dream.xml" class="playSelect"><a href="#">A Midsummer Night's Dream</a></li> 
+
+			      <li id="much_ado.xml" class="playSelect"><a href="#">Much Ado About Nothing</a></li> 
+
+			      <li id="pericles.xml" class="playSelect"><a href="#">Pericles, Prince of Tyre</a></li> 
+
+			      <li id="taming.xml" class="playSelect"><a href="#">The Taming of the Shrew</a></li> 
+
+			      <li id="tempest.xml" class="playSelect"><a href="#">The Tempest</a></li> 
+
+			      <li id="troilus.xml" class="playSelect"><a href="#">Troilus and Cressida</a></li> 
+
+			      <li id="t_night.xml" class="playSelect"><a href="#">Twelfth Night</a></li> 
+
+			      <li id="two_gent.xml" class="playSelect"><a href="#">Two Gentlemen of Verona</a></li> 
+
+			      <li id="win_tale.xml" class="playSelect"><a href="#">The Winter's Tale</a></li> 
+
+		      </ul> 
+
+		      </div>		      
+
+		    </div> 
+
+		    
+
+		    
+
+		    <div id="output"></div> 
+
+ 
+
+		</div>  
+
+		
+
+		<!-- end of content --> 
+
+		
+
+		<div id="info_pane" title="Information"></div> 
+
+		
+
+		<div id="footer"> 
+
+		</div>  
+
+		
+
+		<!-- end of footer --> 
+
+				
+
+	</div> 
+
+	
+
+	<!-- end of box -->	
+
+ 
+
+</body> 
+
+</html> 

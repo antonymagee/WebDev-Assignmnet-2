@@ -1,0 +1,1636 @@
+
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+  <link type="text/css" href="css/antony/jquery-ui-1.8.16.custom.css" rel="stylesheet" />
+
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js"></script>
+
+  <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
+
+  <script type="text/javascript" src="js/jquery-uniqueArray.js"></script>
+
+
+
+  
+
+  <script>
+
+  $(document).reay(function() {
+
+    
+
+	//initializing elements on load
+
+	
+
+	$("#accordion").accordion();	
+
+	$('#home_button').button();		
+
+	$('#contents_button').button({ disabled: true });
+
+	$('#display_info_button').button({ disabled: true });
+
+
+
+	//The makes the dialog box start closed
+
+	$('#help_box').dialog({ autoOpen: false });
+
+	
+
+	
+
+	// Define what happens when home button is pressed
+
+	
+
+	$('#home_button').click(function(event) {
+
+
+
+			// Empty content out of the output DIV and display the accordion again
+
+
+
+			$("#output").empty();
+
+			$('#accordion').show();
+
+
+
+			// Reset the page title back to  
+
+
+
+			$("#title").empty();
+
+			$("#title").append('<br/><H1>A Collection of Shakespeare Plays</</H1><br/>');
+
+			
+
+			// Set the value of the select_play box to its default
+
+			// & remove the options from the act & scene select boxes
+
+			
+
+			$('#select_play').val('...');
+
+			$('#select_act > option').remove();
+
+			$('#select_scene > option').remove();
+
+		
+
+			$('#search_controls').fadeOut();
+
+		})
+
+		
+
+				
+
+	// When an accordion link is clikced correct play is displayed
+
+	
+
+	$('.playSelect').click(function(event) {
+
+  	    	var playNameAsXML = $(this).attr('id');	
+
+        	openPlay(playNameAsXML);							
+
+
+
+        });
+
+		
+
+	// When a select element is chosen the correct play is displayed
+
+		
+
+	$('#select_play').change(function(event){
+
+			var playNameAsXML = $(this).val();	
+
+			openPlay(playNameAsXML);					
+
+		});	
+
+		
+
+	// contents button click event, clicking this return to display page
+
+	
+
+		$('#contents_button').live('click', function(event) {	
+
+			$("#output").empty();
+
+			// set state of sidebar buttons
+
+			$('#contents_button').button({ disabled: true });  
+
+			// display play contents page
+
+			displayPlayContentsPage(xml);			
+
+		});	
+
+		
+
+	// Opens the play via ajax
+
+		
+
+    function openPlay(playNameAsXML){
+
+
+
+        	// Clear the #output DIV and hide the accordion menu
+
+
+
+			$("#output").empty();
+
+			$('#accordion').hide();			
+
+			
+
+			// update the select_play dropdown box
+
+						
+
+			$('#select_play').val(playNameAsXML);			
+
+			loadPlayXML(playNameAsXML);
+
+		
+
+		};
+
+	});
+
+
+
+	
+
+	// function that takes in play name and loads xml doc via ajax
+
+  
+
+	function loadPlayXML(playNameAsXML){
+
+        $.ajax({
+
+			type:"GET",
+
+			url: "plays/" + playNameAsXML,
+
+			dataType: "xml",
+
+			success: displayPlayContentsPage
+
+        });
+
+		}
+
+	
+
+	// Dynamically changes page title as a play is chosen, Called in diaplay contents and set to default in Home button
+
+	
+
+	function dynamicpagetitle(xml) {
+
+	$("#title").empty();
+
+	
+
+	$(xml).find("PLAY > TITLE").each(function() {
+
+		$("#title").append('<br/><H1>' + $(this).text() + '</</H1><br/>');
+
+		});
+
+	}
+
+	
+
+	//Shows the contents of the play on the page
+
+	
+
+	function displayPlayContentsPage(xml){      
+
+
+
+      	var scene;
+
+		
+
+		// update the drop down boxes with the values associated with the
+
+		// selected play.
+
+
+
+      	popActScene(xml);
+
+		
+
+		// Update title with play title
+
+		
+
+		dynamicpagetitle(xml);
+
+		
+
+		// display the dramatis personae link
+
+
+
+        $("#output").append("<span class='personae'><a href='#'>Dramatis Personae</a></span><p>");
+
+
+
+        
+
+
+
+        // display the name of each ACT
+
+
+
+        $(xml).find("PLAY > ACT").each(function(){ 
+
+
+
+		  act = $(this).find('TITLE:first').text();
+
+
+
+		  $("#output").append('<span id="' + act + '" class="actLink"><a href="#">' + act + "</a></span><p>");
+
+
+
+          
+
+
+
+		  // display the name of each SCENE
+
+
+
+          $(this).find('SCENE').each(function(){          	          
+
+
+
+			scene = $(this).find("TITLE").text();
+
+
+
+			$("#output").append('<span id="' + scene + '" class="sceneLink"><a href="#">' + scene + '</a></span><br/>');    	                
+
+
+
+          });
+
+
+
+			$("#output").append("<br/>");
+
+
+
+        });
+
+		
+
+		// Adds events to the each dynamiclly created link
+
+		
+
+		addEvents(xml);
+
+  }
+
+ 
+
+ 
+
+	// Shows the dramatic persona when clicked
+
+
+
+	$('span.personae').live('click', function(event) {
+
+		$("#output").empty();		
+
+		// display play title and selected scene
+
+		displayPersonaeContent(xml);
+
+		});
+
+		
+
+		
+
+	// Adding line numbers to every 5th line within the displayed content
+
+		
+
+	function lineNum(lineNumber, elementType){
+
+
+
+		if (((lineNumber % 5) == 0) && (lineNumber != 0) && (elementType != "STAGEDIR")){
+
+			$("#output").append(" " + lineNumber + "<br/>");
+
+		} else {
+
+			$("#output").append("<br/>");
+
+		}
+
+	}
+
+		
+
+	// Displays the help dialog box when clicked	
+
+		
+
+	$(function(){
+
+				// Dialog			
+
+				$('#dialog').dialog({
+
+					autoOpen: false,
+
+					width: 400,
+
+					buttons: {
+
+						"Ok": function() { 
+
+							$(this).dialog("close"); 
+
+						}, 
+
+						"Cancel": function() { 
+
+							$(this).dialog("close"); 
+
+						} 
+
+					}
+
+				});				
+
+
+
+				// Dialog Link
+
+				$('#dialog_link').click(function(){
+
+					$('#dialog').dialog('open');
+
+					return false;
+
+				});				
+
+			});			
+
+	
+
+	// populates the act and scene select boxes when contents are displayed
+
+	
+
+	function popActScene(xml){	
+
+		
+
+	// empty the previous contents of both select
+
+
+
+		$('#select_act > option').remove();
+
+		$('#select_scene > option').remove();
+
+		$('#select_speaker > option').remove();
+
+
+
+		
+
+
+
+		// sets a default option for each box (...)
+
+
+
+		$("<option selected='yes'>...</option>").appendTo("#select_act");
+
+		$("<option selected='yes'>...</option>").appendTo("#select_scene");
+
+
+
+		
+
+
+
+		// Populates the act dropdown box with ACT names
+
+
+
+		$(xml).find("PLAY > ACT").each(function(){ 
+
+
+
+		  	
+
+
+
+			// populate the #select_act box with the act names
+
+
+
+			act = $(this).find('TITLE:first').text();
+
+			$("<option value='" + act + "'>" + act + "</option>").appendTo("#select_act");						
+
+		});
+
+
+
+		// Populate the speakers dropdown box used for searching
+
+		populateSpeakers(xml);
+
+
+
+	}			
+
+	
+
+	
+
+	
+
+				
+
+	
+
+		
+
+	function addEvents(xml){
+
+
+
+		var selectedAct;
+
+		var selectedScene;
+
+
+
+		// .die() removes any events already attached to each element
+
+
+
+		// this ensures that each time addEvents is called the elements
+
+
+
+		// will have ONE and only one event attached
+
+
+
+		$('#contents_button').die();
+
+		$('#display_info_button').die();
+
+		$('#select_act').die();
+
+		$('#select_scene').die();
+
+		$('#go_button').die();
+
+		$('#select_speaker').die();
+
+		$('span.personae').die();
+
+		$('span.actLink').die();
+
+		$('span.sceneLink').die();
+
+
+
+		
+
+
+
+		// Clicking act names will load the ACT page  
+
+
+
+		$('span.actLink').live('click', function(event) {
+
+
+
+			$("#output").empty();					
+
+			
+
+			// display play title and selected act
+
+
+
+			
+
+
+
+			var selection = $(this).attr("id");
+
+
+
+			displayActContent(selection, xml);
+
+
+
+			selectedAct = selection;						
+
+
+
+		});
+
+
+
+		
+
+		// Clicking a scene name will load it   
+
+
+
+		$('span.sceneLink').live('click', function(event) {
+
+
+
+			$("#output").empty();
+
+		
+
+			// display play title and selected scene
+
+			$('#contents_button').button({ disabled: false });
+
+			
+
+
+
+			var selection = $(this).attr("id");
+
+
+
+			selectedScene = selection;
+
+			
+
+			displaySceneContent(selection, xml);
+
+			
+
+		});					
+
+
+
+		// Clicking Dramatas Persona loads its data   ---  
+
+
+
+		$('span.personae').live('click', function(event) {
+
+
+
+			$("#output").empty();
+
+			
+
+			// display play title and selected scene
+
+			$('#contents_button').button({ disabled: false });
+
+			
+
+
+
+			displayPersonaeContent(xml);
+
+
+
+		});
+
+	
+
+		// Selecting an act loads it's contents to the output DIV
+
+
+
+		$('#select_act').live('change', function(event) {
+
+
+
+			$("#output").empty();
+
+
+
+			$('#accordion').hide();
+
+
+
+			
+
+			// display play title and selected act
+
+
+
+			
+
+
+
+			var currentActName = $(this).val();			
+
+
+
+			displayActContent(currentActName, xml);
+
+
+
+		});
+
+		
+
+
+
+		// Selecting a Scene loads its contents to the output div
+
+
+
+		$('#select_scene').live('change', function(event) {	
+
+
+
+			$("#output").empty();
+
+
+
+			$('#accordion').hide();
+
+		
+
+
+
+			// display play title and selected scene
+
+
+
+			
+
+
+
+			var selectedScene = $(this).val();
+
+
+
+			displaySceneContent(selectedScene, xml);				
+
+
+
+		});
+
+
+
+		// Display the scene content
+
+
+
+		function displaySceneContent(selectedScene, xml){
+
+
+
+		var elementType;
+
+
+
+		var lineNumber = 1;
+
+
+
+		var actName;
+
+
+
+ 
+
+
+
+		// Get the ACT this scene is inside
+
+
+
+		actName = getActName(selectedScene, xml);
+
+
+
+				
+
+
+
+		// iterate over each SCENE
+
+
+
+		$(xml).find("SCENE").each(function() {				
+
+
+
+			
+
+
+
+			// if SCENE is the one the user clicked on then..
+
+
+
+			if ($(this).find("TITLE").text() == selectedScene){													
+
+
+
+			
+
+
+
+				// display the child elements of the SCENE
+
+
+
+				$(this).children().each(function() {						
+
+
+
+					
+
+
+
+					// switch based on the element type: "TITLE"/"STAGEDIR"/etc
+
+
+
+					elementType = $(this).get(0).tagName;
+
+
+
+					switch (elementType){
+
+
+
+					case "TITLE":
+
+
+
+						$("#output").append("<span class='title'>" + actName + " " + $(this).text() + "</span><p>");
+
+
+
+						break;
+
+
+
+					case "STAGEDIR":
+
+
+
+						$("#output").append("<br/><span class='stagedir'>[" + $(this).text() + "]</span><br/>");
+
+
+
+						break;
+
+
+
+					case "SPEECH":
+
+
+
+					  
+
+
+
+						$(this).find("SPEAKER:first").each(function() {										  
+
+
+
+							$("#output").append("<span class='speaker'>" + $(this).text() + "</span><br/>");
+
+
+
+						});
+
+
+
+						$(this).find("LINE").each(function() {										  
+
+
+
+							$("#output").append("<span class='speech'>" + $(this).text() + "</span>");
+
+
+
+							lineNum(lineNumber, elementType);					  
+
+
+
+							 lineNumber++;
+
+
+
+						  });
+
+
+
+						  $("#output").append("<br/>");
+
+
+
+					  break;						
+
+
+
+					} // End of SWITCH block
+
+
+
+				});
+
+
+
+			} // end of IF
+
+
+
+		});				
+
+
+
+	}
+
+	
+
+		// Display the Act Content
+
+	
+
+		function displayActContent(selectedAct, xml){
+
+
+
+	
+
+
+
+		// populates the select boxes in the sidebar				
+
+
+
+		populateSelectBoxesAfterActIsChosen(selectedAct, xml);
+
+
+
+		
+
+
+
+		$(xml).find('ACT').each(function(){			
+
+
+
+			
+
+
+
+			// if this iterations act is equal to the passed in act
+
+
+
+			if ($(this).find("TITLE:first").text() == selectedAct){	
+
+
+
+				act = $(this).find('TITLE:first').text();
+
+
+
+		  		$("#output").append('<span class="actLink">' + act + "</span><p>");
+
+
+
+				
+
+
+
+				$(this).find("SCENE").each(function(){
+
+
+
+					scene = $(this).find("TITLE").text();
+
+
+
+					$("#output").append('<span id="' + scene + '" class="sceneLink"><a href="#">' + scene + '</a></span><br/>');    					
+
+
+
+				});
+
+
+
+			} // End of IF: if ($(this).find("TITLE:first").text() == selectedAct)
+
+
+
+		});
+
+
+
+	}
+
+		
+
+		// Display the content of the persona  --  WORKING
+
+		
+
+		function displayPersonaeContent(xml){
+
+
+
+		var childType;
+
+
+
+		$(xml).find("PLAY > PERSONAE").children().each(function() {						
+
+			childType = $(this).get(0).tagName;
+
+			// if child is of type TITLE then output it with style, otherwise output it normally
+
+			if (childType == "TITLE"){
+
+				$("#output").append('<span class="title">' + $(this).text() + '</span><p>');
+
+			} else {
+
+				$("#output").append('<span>' + $(this).text() + '</span><p>');
+
+			}			
+
+		});
+
+		$("#output").append("<p>");
+
+	}
+
+	
+
+	
+
+		// Get the name of the act in the drop down menu
+
+
+
+		function getActName(selectedScene, xml){
+
+
+
+		var currentAct;
+
+		var actName;
+
+		var currentScene;
+
+		
+
+		$(xml).find("PLAY > ACT > TITLE").each(function() {
+
+
+
+		currentAct = $(this).text();
+
+
+
+			$(this).parent().find('> SCENE > TITLE').each(function(){		
+
+				currentScene = $(this).text();		
+
+
+
+				// IF the SCENE in this iteration is the same as the scene that was
+
+
+
+				// passed in then set actName to the ACT this loop is currently on
+
+
+
+				// which will be the ACT that this SCENE is inside
+
+
+
+				if(currentScene == selectedScene){
+
+					actName = currentAct;		
+
+				}					
+
+			});		
+
+		});
+
+
+
+		return actName;
+
+
+
+      }
+
+
+
+		// passes in the act or scene to the fucntion to get a uniqure set of speakers
+
+	  
+
+		function populateSpeakers(xml){
+
+
+
+		// Find the size of the set of speakers (will have duplicates)
+
+		// Use this variable to set the inital size of the array
+
+
+
+		var size = $(xml).find('SPEAKER').size();
+
+		var myArray = new Array(size);
+
+
+
+		
+
+
+
+		// Iterate over each speaker and add them to the aray
+
+
+
+		var x = 0;
+
+		$(xml).find('SPEAKER').each(function(){
+
+			myArray[x] = $(this).text();
+
+			x++;
+
+		});
+
+
+
+		// Use this nifty jQuery plugin to reduce the array to an array
+
+		// of unique names/strings
+
+
+
+		myArray = $.uniqueArray(myArray);
+
+
+
+		// Set a default value for teh speaker select box
+
+
+
+		$("<option selected='yes'>...</option>").appendTo("#select_speaker");		
+
+
+
+		// Iterate over the array using the for..each functionality in jQuery
+
+		// adding each name to the speaker select box as an option
+
+
+
+		x = 0;
+
+		$.each(myArray, function() { 
+
+			name = myArray[x]
+
+			$('<option value="' + name + '">' + name + '</option>').appendTo("#select_speaker");
+
+			x++;
+
+		});
+
+	} 
+
+	  
+
+		// Gets the number of speakers for the info page
+
+	  
+
+		function getNumberOfSpeakers(xml){
+
+
+
+		// Find the size of the set of speakers (will have duplicates)
+
+		// Use this variable to set the inital size of the array
+
+
+
+		var size = $(xml).find('SPEAKER').size();
+
+		var myArray = new Array(size);
+
+
+
+		// Iterate over each speaker and add them to the aray
+
+
+
+		var x = 0;
+
+		$(xml).find('SPEAKER').each(function(){
+
+			myArray[x] = $(this).text();
+
+			x++;
+
+		});
+
+
+
+		
+
+		// Use this nifty jQuery plugin to reduce the array to an array
+
+		// of unique names/strings
+
+
+
+		myArray = $.uniqueArray(myArray);
+
+		
+
+		// return the size of the array
+
+
+
+		return myArray.length;
+
+
+
+	}
+
+
+
+	// Passes the speaker to the search function
+
+	
+
+	$('#select_speaker').live('change', function(event) {		  	    	
+
+
+
+			$("#output").empty();
+
+			$('#accordion').hide();		
+
+
+
+			// set state of sidebar buttons
+
+			$('#contents_button').button( "option", "disabled", false );					
+
+			var speaker = $(this).val();			
+
+			searchForLinesBySpeaker(speaker, xml);
+
+		});	
+
+	
+
+	} 
+
+  
+
+  
+
+  
+
+  
+
+</script>
+
+</head>
+
+<body style="font-size:62.5%;">
+
+  
+
+<div id="for_site">
+
+<div id="title">
+
+<br>
+
+<h1>A Collection of Shakespeare Plays</h1>
+
+<br>
+
+</div>
+
+  
+
+<div id="menu">
+
+
+
+		<input type="button" id="home_button" class="button" value="Home"><br/> 
+
+		<input type="button" id="contents_button" class="button" value="Contents"><br/> 
+
+		<input type="button" id="display_info_button" class="button" value="Display play info"> <br/> 
+
+		<input type="button" id="dialog_link" class="button ui-button ui-widget ui-state-default ui-corner-all" value="Help">
+
+		
+
+		
+
+		
+
+		<!-- ui-dialog -->
+
+
+
+		<div id="dialog" title="Help">
+
+			<p class="title"><b>Select a play</b></p>
+
+			<p> Select a play form the list provided </p>
+
+			
+
+			<p class="title"><b>Contents</b></p>
+
+			<p> Returns you to the contents page fo any play </p>
+
+			
+
+		</div>
+
+			
+
+			
+
+
+
+			
+
+			
+
+			
+
+<p>
+
+				<span class="sideBarText">Select a Play..</span> 				
+
+				<select id="select_play">		    
+
+
+
+				<!---- Group of Tragedies ----->
+
+				
+
+				<option selected="yes">...</option> 
+
+				<option value="heading" class="select_heading">Tragedies</option> 
+
+				<option value="a_and_c.xml">Antony and Cleopatra</option> 
+
+				<option value="coriolan.xml">Coriolanus</option> 
+
+				<option value="hamlet.xml">Hamlet</option> 
+
+				<option value="j_caesar.xml">Julius Caesar</option> 
+
+				<option value="lear.xml">King Lear</option> 
+
+				<option value="macbeth.xml">Macbeth</option> 
+
+				<option value="othello.xml">Othello</option> 
+
+				<option value="r_and_j.xml">Romeo and Juliet</option> 
+
+				<option value="timon.xml">Timon of Athens</option> 
+
+				<option value="titus.xml">Titus Andronicus</option> 
+
+
+
+				<!---- Group of History plays ----->
+
+
+
+				<option value="heading" class="select_heading"></option> 
+
+				<option value="heading" class="select_heading">Histories</option> 
+
+				<option value="hen_iv_1.xml">Henry IV, Part I</option> 
+
+				<option value="hen_iv_2.xml">Henry IV, Part II</option> 
+
+				<option value="hen_v.xml">Henry V</option> 
+
+				<option value="hen_vi_1.xml">Henry VI, Part I</option> 
+
+				<option value="hen_vi_2.xml">Henry IV, Part II</option> 
+
+				<option value="hen_vi_3.xml">Henry IV, Part III</option> 
+
+				<option value="hen_viii.xml">Henry VIII</option> 
+
+				<option value="john.xml">King John</option> 
+
+				<option value="rich_ii.xml">Richard II</option> 
+
+				<option value="rich_iii.xml">Richard II</option> 
+
+
+
+				<!---- Group of Comedy plays -----> 
+
+
+
+				<option value="heading" class="select_heading"></option> 
+
+				<option value="heading" class="select_heading">Comedies</option> 
+
+				<option value="all_well.xml">All's Well That Ends Well</option> 
+
+				<option value="as_you.xml">As You Like It</option> 
+
+				<option value="com_err.xml">The Comedy of Errors</option> 
+
+				<option value="cymbelin.xml">Cymbeline</option> 
+
+				<option value="lll.xml">Love's Labours Lost</option> 
+
+				<option value="m_for_m.xml">Measure for Measure</option> 
+
+				<option value="m_wives.xml">The Mercy Wives of Windsor</option> 
+
+				<option value="merchant.xml">The Merchant of Venice</option> 
+
+				<option value="dream.xml">A Midsummer Night's Dream</option> 
+
+				<option value="much_ado.xml">Much Ado About Nothing</option> 
+
+				<option value="pericles.xml">Pericles, Prince of Tyre</option> 
+
+				<option value="taming.xml">The Taming of the Shrew</option> 
+
+				<option value="tempest.xml">The Tempest</option> 
+
+				<option value="troilus.xml">Troilus and Cressida</option> 
+
+				<option value="t_night.xml">Twelfth Night</option> 
+
+				<option value="two_gent.xml">Two Gentlemen of Verona</option> 
+
+				<option value="win_tale.xml">The Winter's Tale</option> 
+
+				
+
+				</select> 
+
+				</p>
+
+				
+
+				<!----- Select an Act --->
+
+				<p>
+
+				<span class="ui-menu">Select an Act..</span></br>				
+
+				<select id='select_act'>
+
+				<option selected="yes">...</option>
+
+				</select> 
+
+				</p>
+
+
+
+				<p></p> 
+
+				
+
+				<p>
+
+				<span class="ui-menu">Select a Scene..</span></br>				
+
+				<select id='select_scene'>
+
+				<option selected="yes">...</option>
+
+				</select> 
+
+				</p>
+
+				
+
+				<span class="ui-menu">Select a Speaker..</span></br>	
+
+				<select id="select_speaker">				
+
+				<option selected="yes">...</option>
+
+				</select>
+
+		
+
+</div>  
+
+
+
+
+
+
+
+
+
+<div id="content">  
+
+<div id="accordion">
+
+	<h3><a href="#">Tragedies</a></h3>
+
+	<div>
+
+		<ul> 
+
+			<li id="a_and_c.xml" class="playSelect"><a href="#">Antony and Cleopatra</a></li> 
+
+		    <li id="coriolan.xml" class="playSelect"><a href="#">Coriolanus</a></li> 
+
+			<li id="hamlet.xml" class="playSelect"><a href="#">Hamlet</a></li> 
+
+			<li id="j_caesar.xml" class="playSelect"><a href="#">Julius Caesar</a></li> 
+
+			<li id="lear.xml" class="playSelect"><a href="#">King Lear</a></li> 
+
+			<li id="macbeth.xml" class="playSelect"><a href="#">Macbeth</a></li> 
+
+			<li id="othello.xml" class="playSelect"><a href="#">Othello</a></li> 
+
+			<li id="r_and_j.xml" class="playSelect"><a href="#">Romeo and Juliet</a></li> 
+
+			<li id="timon.xml" class="playSelect"><a href="#">Timon of Athens</a></li> 
+
+			<li id="titus.xml" class="playSelect"><a href="#">Titus Andronicus</a></li>		                 		          
+
+		</ul> 
+
+	</div>
+
+	
+
+	
+
+	<h3><a href="#">Histories</a></h3>
+
+	<div>
+
+		<ul> 
+
+			<li id="hen_iv_1.xml" class="playSelect"><a href="#">Henry IV, Part I</a></li> 
+
+			<li id="hen_iv_2.xml" class="playSelect"><a href="#">Henry IV, Part II</a></li> 
+
+			<li id="hen_v.xml" class="playSelect"><a href="#">Henry V</a></li> 
+
+			<li id="hen_vi_1.xml" class="playSelect"><a href="#">Henry VI, Part I</a></li> 	
+
+			<li id="hen_vi_2.xml" class="playSelect"><a href="#">Henry VI, Part II</a></li> 
+
+			<li id="hen_vi_3.xml" class="playSelect"><a href="#">Henry VI, Part III</a></li> 
+
+			<li id="hen_viii.xml" class="playSelect"><a href="#">Henry VIII</a></li> 
+
+			<li id="john.xml" class="playSelect"><a href="#">King John</a></li> 
+
+			<li id="rich_ii.xml" class="playSelect"><a href="#">Richard II</a></li> 
+
+			<li id="rich_iii.xml" class="playSelect"><a href="#">Richard III</a></li>          		          
+
+		</ul>
+
+	</div>
+
+	
+
+	
+
+	<h3><a href="#">Comedies</a></h3>
+
+	<div>
+
+		<ul>		          
+
+			<li id="all_well.xml" class="playSelect"><a href="#">All's Well That Ends Well</a></li> 		      <li id="as_you.xml" class="playSelect"><a href="#">As You Like It</a></li> 
+
+			<li id="com_err.xml" class="playSelect"><a href="#">The Comedy of Errors</a></li> 
+
+			<li id="cymbelin.xml" class="playSelect"><a href="#">Cymbeline</a></li> 
+
+			<li id="lll.xml" class="playSelect"><a href="#">Love's Labours Lost</a></li> 
+
+			<li id="m_for_m.xml" class="playSelect"><a href="#">Measure for Measure</a></li> 
+
+			<li id="m_wives.xml" class="playSelect"><a href="#">The Merry Wives of Windsor</a></li> 
+
+			<li id="merchant.xml" class="playSelect"><a href="#">The Merchant of Venice</a></li>	
+
+			<li id="dream.xml" class="playSelect"><a href="#">A Midsummer Night's Dream</a></li> 
+
+			<li id="much_ado.xml" class="playSelect"><a href="#">Much Ado About Nothing</a></li> 
+
+			<li id="pericles.xml" class="playSelect"><a href="#">Pericles, Prince of Tyre</a></li> 
+
+			<li id="taming.xml" class="playSelect"><a href="#">The Taming of the Shrew</a></li> 
+
+		    <li id="tempest.xml" class="playSelect"><a href="#">The Tempest</a></li> 
+
+			<li id="troilus.xml" class="playSelect"><a href="#">Troilus and Cressida</a></li> 
+
+			<li id="t_night.xml" class="playSelect"><a href="#">Twelfth Night</a></li> 
+
+			<li id="two_gent.xml" class="playSelect"><a href="#">Two Gentlemen of Verona</a></li> 
+
+			<li id="win_tale.xml" class="playSelect"><a href="#">The Winter's Tale</a></li> 
+
+		</ul>
+
+	</div>
+
+</div>
+
+
+
+
+
+
+
+<div id="output">
+
+
+
+		</div>
+
+	</div>
+
+</div>  
+
+
+
+</body>
+
+</html>hh
